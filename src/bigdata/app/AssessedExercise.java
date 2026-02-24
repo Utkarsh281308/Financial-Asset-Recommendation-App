@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -17,6 +18,7 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import bigdata.objects.Asset;
 import bigdata.objects.AssetFeatures;
 import bigdata.objects.AssetMetadata;
 import bigdata.objects.AssetRanking;
@@ -160,10 +162,16 @@ public static void main(String[] args) throws InterruptedException {
     	JavaPairRDD<String, Tuple2<AssetFeatures, AssetMetadata>> peFiltered = joinedAssets
     			.filter(new PERatioFilter(peRatioThreshold));
     	
+    	JavaRDD<Asset> assets = peFiltered.map(new AssetBuilderMap());
+    	
+    	List<Asset> topAssets = assets.top(5);
     	
     	
     	
-    	AssetRanking finalRanking = new AssetRanking(); // ...One of these is what your Spark program should collect
+    	
+    	
+    	
+    	AssetRanking finalRanking = new AssetRanking(topAssets.toArray(new Asset[5])); // ...One of these is what your Spark program should collect
     	
     	return finalRanking;
     	
