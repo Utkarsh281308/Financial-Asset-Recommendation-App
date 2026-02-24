@@ -24,6 +24,7 @@ import bigdata.objects.StockPrice;
 import bigdata.transformations.filters.NullPriceFilter;
 import bigdata.transformations.maps.*;
 import bigdata.transformations.pairing.AssetMetadataPairing;
+import scala.Tuple2;
 import bigdata.transformations.filters.*;
 
 public class AssessedExercise {
@@ -152,6 +153,14 @@ public static void main(String[] args) throws InterruptedException {
     	
     	JavaPairRDD<String, AssetFeatures> volatilityFiltered = assetFeatures
     			.filter(new VolatilityFilter(volatilityCeiling));
+    	
+    	JavaPairRDD<String, Tuple2<AssetFeatures, AssetMetadata>> joinedAssets = volatilityFiltered
+    			.join(assetMetadata);
+    	
+    	JavaPairRDD<String, Tuple2<AssetFeatures, AssetMetadata>> peFiltered = joinedAssets
+    			.filter(new PERatioFilter(peRatioThreshold));
+    	
+    	
     	
     	
     	AssetRanking finalRanking = new AssetRanking(); // ...One of these is what your Spark program should collect
