@@ -11,17 +11,20 @@ import java.util.Date;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import bigdata.objects.AssetFeatures;
 import bigdata.objects.AssetMetadata;
 import bigdata.objects.AssetRanking;
 import bigdata.objects.StockPrice;
 import bigdata.transformations.filters.NullPriceFilter;
-import bigdata.transformations.maps.PriceReaderMap;
+import bigdata.transformations.maps.*;
 import bigdata.transformations.pairing.AssetMetadataPairing;
+import bigdata.transformations.filters.*;
 
 public class AssessedExercise {
 
@@ -136,7 +139,19 @@ public static void main(String[] args) throws InterruptedException {
     	// Student's solution starts here
     	//----------------------------------------
     	
+    	JavaRDD<StockPrice> filteredPrices = prices
+    			.toJavaRDD()
+    			.filter(new DateRangeFilter(datasetEndDate));
     	
+    	JavaPairRDD<String, Iterable<StockPrice>> priceByTicker = filteredPrices
+    			.mapToPair(new StockPriceToPairMap())
+    			.groupByKey();
+    	
+    	JavaPairRDD<String, AssetFeatures> assetFeatures = priceByTicker
+    			.mapValues(new CalculateAssetFeaturesMap());
+    	
+    	JavaPairRDD<String, AssetFeatures> volatilityFiltered = assetFeatures
+    			.filter(new VolatilityFilter(volatilityCeiling));
     	
     	
     	AssetRanking finalRanking = new AssetRanking(); // ...One of these is what your Spark program should collect
